@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <title>FLIGHT MATRIX</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; }
@@ -60,6 +61,15 @@
     background: #ccc;
     cursor: not-allowed;
 }
+
+
+
+
+footer { background: #000; color: white; padding: 40px 20px; text-align: center; margin-top: 50px; }
+.footer-links a { color: white; text-decoration: none; margin: 0 10px; font-weight: bold; }
+.footer-links a u { text-decoration: underline; }
+.footer-icons { margin-top: 20px; font-size: 24px; }
+.footer-icons a { color: white; margin: 0 10px; }
     </style>
 </head>
 
@@ -185,5 +195,18 @@ function distanceKm(lat1, lon1, lat2, lon2) {
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 </script>
+
+<footer>
+    <div class="footer-links">
+        <a href="about.html"><u>ABOUT</u></a> | 
+        <a href="disclaimer.html"><u>DISCLAIMER</u></a> | 
+        <a href="privacy.html"><u>PRIVACY STATEMENT</u></a> | 
+        <a href="contact.html"><u>CONTACT US</u></a>
+    </div>
+    <div class="footer-icons">
+        <a href="https://www.instagram.com/wellspokn1975"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.linkedin.com/sunil-vasarkar-in-216184158"><i class="fab fa-linkedin"></i></a>
+    </div>
+</footer>
 </body>
 </html>
