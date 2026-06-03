@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLIGHT MATRIX</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        
+        .flight-tool-wrapper { 
+            padding: 30px; 
+            background: white; 
+            border: 3px solid #007bff; 
+            border-radius: 15px; 
+            text-align: center; 
+            margin-bottom: 30px;
+        }
+        .flight-input { 
+            width: 80%; 
+            padding: 15px; 
+            font-size: 18px; 
+            border: 2px solid #007bff; 
+            border-radius: 8px; 
+        }
+        .flight-card { 
+            border-bottom: 1px solid #eee; 
+            padding: 20px; 
+            text-align: left; 
+        }
+        .airport-type { 
+            display: inline-block; 
+            padding: 4px 8px; 
+            background: #e0e0e0; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            margin: 5px 0;
+        }
+        .suggestion { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; background: white; }
+        .suggestion:hover { background: #f2f2f2; }
+
+
+
+
+
+.nav-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.nav-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h1>FLIGHT <span style="color:#007bff;">MATRIX</span></h1>
+    
+    <div class="flight-tool-wrapper">
+
+
+<!-- ADD THIS IMAGE TAG HERE -->
+    <div style="text-align:center; margin-bottom:15px;">
+        <img src="logo_airports.png" alt="Airport Matrix Logo" style="width:150px; height:auto; display:inline-block;">
+    </div>
+
+
+        <h2 style="color:#007bff; margin-bottom: 20px;">Nearest Airports Finder</h2>
+        <input type="text" id="flightSearch" class="flight-input" placeholder="Enter University Name...">
+        <div id="flightSuggestions" style="text-align:left; max-width:80%; margin:auto;"></div>
+        <div id="flightDisplay" style="margin-top:20px;"></div>
+
+
+
+
+<!-- Pagination Container -->
+<div id="flightPagination" style="text-align:center; margin-top:30px; display:none;">
+    <button onclick="changeFlightPage(-1)" id="prevBtn" class="nav-btn">⬅</button>
+    <span id="pageIndicator" style="margin: 0 20px; font-weight:bold;">Page 1</span>
+    <button onclick="changeFlightPage(1)" id="nextBtn" class="nav-btn">➡</button>
+</div>
+    </div>
+</div>
+
+<script>
+let universities = [];
+
+// Load your University database
+async function loadUniversities(){
+    const response = await fetch("output_final.json");
+    universities = await response.json();
+}
+loadUniversities();
+
+const flightSearch = document.getElementById("flightSearch");
+const flightSuggestions = document.getElementById("flightSuggestions");
+const flightDisplay = document.getElementById("flightDisplay");
+
+flightSearch.addEventListener("input", function() {
+    let val = this.value.toLowerCase();
+    flightSuggestions.innerHTML = "";
+    if(val.length < 3) return;
+
+    let matches = universities.filter(u => u.UNIVERSITY && u.UNIVERSITY.toLowerCase().includes(val)).slice(0, 5);
+    
+    matches.forEach(u => {
+        let div = document.createElement("div");
+        div.className = "suggestion";
+        div.innerText = u.UNIVERSITY;
+        div.onclick = () => {
+            flightSearch.value = u.UNIVERSITY;
+            flightSuggestions.innerHTML = "";
+            findNearestAirports(u);
+        };
+        flightSuggestions.appendChild(div);
+    });
+});
+
+let allResults = [];
+let currentFlightPage = 1;
+const perPage = 10;
+
+async function findNearestAirports(uni) {
+    flightDisplay.innerHTML = "<h3>Searching...</h3>";
+    const response = await fetch("airports.json");
+    const airports = await response.json();
+    
+    // Calculate distance for all
+    airports.forEach(a => {
+        a.dist = distanceKm(parseFloat(uni.LAT), parseFloat(uni.LON), a.latitude_deg, a.longitude_deg);
+    });
+    
+    allResults = airports.sort((a,b) => a.dist - b.dist);
+    currentFlightPage = 1;
+    renderFlightPage();
+}
+
+function renderFlightPage() {
+    const start = (currentFlightPage - 1) * perPage;
+    const end = start + perPage;
+    const pageResults = allResults.slice(start, end);
+    
+    flightDisplay.innerHTML = "";
+    pageResults.forEach(a => {
+        flightDisplay.innerHTML += `
+        <div class="flight-card">
+            <div style="font-weight:bold; font-size:18px;">${a.name}</div>
+            <div class="airport-type">${a.type}</div>
+            <div style="color:red; font-weight:bold;">${a.dist.toFixed(1)} KM from University</div>
+            <div style="font-size:14px;">Location: ${a.municipality || ""}, ${a.iso_country}</div>
+            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.name)}" target="_blank" style="color:blue;">📍 View on Map</a>
+        </div>`;
+    });
+
+    // Update pagination visibility and buttons
+    const nav = document.getElementById("flightPagination");
+    nav.style.display = allResults.length > perPage ? "block" : "none";
+    document.getElementById("pageIndicator").innerText = "Page " + currentFlightPage;
+    document.getElementById("prevBtn").disabled = (currentFlightPage === 1);
+    document.getElementById("nextBtn").disabled = (end >= allResults.length);
+}
+
+function changeFlightPage(dir) {
+    currentFlightPage += dir;
+    renderFlightPage();
+}
+
+// Distance calculation math
+function distanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2-lat1) * Math.PI/180;
+    const dLon = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+</script>
+</body>
+</html>
